@@ -17,16 +17,26 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # Validate HTML
+      - name: Validate HTML
+        uses: Cyb3r-Jak3/html5validator-action@v7.2.0
+        with:
+          root: website/
+
+      # Configure AWS Credentials (OIDC)
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      # Deploy
       - name: Sync Website to S3
-        run: aws s3 sync website/ s3://${{ secrets.S3_BUCKET_NAME }} --delete
+        run: |
+          aws s3 sync website/ s3://${{ secrets.S3_BUCKET_NAME }} --delete
 
-      - name: Invalidate CloudFront Cache
+      # Clear CloudFront Cache
+      - name: Create CloudFront Invalidation
         run: |
           aws cloudfront create-invalidation \
             --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
